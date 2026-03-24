@@ -1,118 +1,171 @@
+<%@ page contentType="text/html;charset=UTF-8" language="java" %>
+<%@ page import="java.sql.*, doa.DBConnection" %>
 <%
     if (session.getAttribute("admin") == null) {
         response.sendRedirect("login.jsp?error=Please login first");
         return;
     }
+    String dealerIdStr = request.getParameter("dealer_id");
+    if (dealerIdStr == null) {
+        response.sendRedirect("view_dealers.jsp");
+        return;
+    }
+    int dealerId = Integer.parseInt(dealerIdStr);
+
+    String dealerName = "", dealerPhone = "";
+    double dealerCredit = 0;
+    int txnCount = 0;
+    double totalAdded = 0, totalSettled = 0;
+
+    try (Connection conn = DBConnection.getConnection()) {
+        PreparedStatement ps = conn.prepareStatement("SELECT * FROM dealers WHERE id = ?");
+        ps.setInt(1, dealerId);
+        ResultSet rs = ps.executeQuery();
+        if (rs.next()) {
+            dealerName   = rs.getString("name");
+            dealerPhone  = rs.getString("phone");
+            dealerCredit = rs.getDouble("credit");
+        }
+        PreparedStatement psTxn = conn.prepareStatement(
+            "SELECT COUNT(*), " +
+            "SUM(CASE WHEN transaction_type='ADD' THEN amount ELSE 0 END), " +
+            "SUM(CASE WHEN transaction_type='SETTLE' THEN amount ELSE 0 END) " +
+            "FROM dealer_transactions WHERE dealer_id = ?");
+        psTxn.setInt(1, dealerId);
+        ResultSet rsTxn = psTxn.executeQuery();
+        if (rsTxn.next()) {
+            txnCount     = rsTxn.getInt(1);
+            totalAdded   = rsTxn.getDouble(2);
+            totalSettled = rsTxn.getDouble(3);
+        }
+    } catch (Exception e) { /* ignore */ }
 %>
-
-<%@ page import="java.sql.*, doa.DBConnection" %>
-<%@ page contentType="text/html;charset=UTF-8" language="java" %>
-<html>
+<!DOCTYPE html>
+<html lang="en">
 <head>
+    <meta charset="UTF-8">
     <title>Dealer Details</title>
-    <link rel="stylesheet" href="style.css">
-
-    <style>
-        table {
-            width: 80%;
-            margin: 20px auto;
-            border-collapse: collapse;
-            background-color: #2e2e4d;
-            color: #ffffff;
-        }
-        th, td {
-            padding: 10px;
-            border: 1px solid #444;
-            text-align: center;
-        }
-        th {
-            background-color: #1e1e2f;
-        }
-        h2, h3 {
-            text-align: center;
-            color: #ffffff;
-        }
-        .back-link {
-            display: block;
-            text-align: center;
-            margin: 20px;
-            color: #ffffff;
-            text-decoration: none;
-            font-weight: bold;
-        }
-        .back-link:hover {
-            text-decoration: underline;
-        }
-    </style>
+    <link rel="stylesheet" href="css/content.css">
 </head>
 <body>
-    <jsp:include page="navbar.jsp" />
 
-    <h2>Dealer Transactions</h2>
+<!-- Page Header -->
+<div class="page-header">
+    <div>
+        <h2>📄 Dealer Details</h2>
+        <div class="breadcrumb">Home › View Dealers › Details</div>
+    </div>
+</div>
 
-    <%
-        String dealerIdStr = request.getParameter("dealer_id");
-        if(dealerIdStr == null) {
-            out.println("<p style='text-align:center; color:white;'>Invalid dealer ID.</p>");
-        } else {
-            int dealerId = Integer.parseInt(dealerIdStr);
+<div class="content-wrapper">
 
-            try (Connection conn = DBConnection.getConnection()) {
-                // Get dealer info
-                String dealerSql = "SELECT * FROM DEALERS WHERE ID = ?";
-                PreparedStatement psDealer = conn.prepareStatement(dealerSql);
-                psDealer.setInt(1, dealerId);
-                ResultSet rsDealer = psDealer.executeQuery();
+    <!-- Back Link -->
+    <a href="view_dealers.jsp" class="back-link">← Back to Dealer List</a>
 
-                if(rsDealer.next()) {
-    %>
-    <p style="text-align:center; color:white;"><b>Name:</b> <%= rsDealer.getString("NAME") %></p>
-    <p style="text-align:center; color:white;"><b>Phone:</b> <%= rsDealer.getString("PHONE") %></p>
-    <p style="text-align:center; color:white;"><b>Current Credit:</b> <%= rsDealer.getDouble("CREDIT") %></p>
+    <!-- Dealer Info Card -->
+    <div class="detail-info-card" style="border-left-color: #f5a623;">
+        <div class="info-item">
+            <span class="info-label">Dealer ID</span>
+            <span class="info-value">#<%= dealerId %></span>
+        </div>
+        <div class="info-item">
+            <span class="info-label">Dealer Name</span>
+            <span class="info-value">🏬 <%= dealerName %></span>
+        </div>
+        <div class="info-item">
+            <span class="info-label">Phone</span>
+            <span class="info-value">📞 <%= dealerPhone %></span>
+        </div>
+        <div class="info-item">
+            <span class="info-label">Current Credit</span>
+            <span class="info-value credit-amount">₹ <%= String.format("%.2f", dealerCredit) %></span>
+        </div>
+    </div>
 
-    <h3>Transaction History</h3>
-    <table>
-        <tr>
-            <th>ID</th>
-            <th>Date</th>
-            <th>Type</th>
-            <th>Amount</th>
-        </tr>
-        <%
-            String txnSql = "SELECT * FROM DEALER_TRANSACTIONS WHERE DEALER_ID = ? ORDER BY TRANSACTION_DATE DESC";
-            PreparedStatement psTxn = conn.prepareStatement(txnSql);
-            psTxn.setInt(1, dealerId);
-            ResultSet rsTxn = psTxn.executeQuery();
+    <!-- Stats Row -->
+    <div class="stats-row">
+        <div class="stat-chip">
+            <div class="s-label">Total Transactions</div>
+            <div class="s-value"><%= txnCount %></div>
+        </div>
+        <div class="stat-chip green">
+            <div class="s-label">Total Added</div>
+            <div class="s-value">₹ <%= String.format("%.2f", totalAdded) %></div>
+        </div>
+        <div class="stat-chip red">
+            <div class="s-label">Total Settled</div>
+            <div class="s-value">₹ <%= String.format("%.2f", totalSettled) %></div>
+        </div>
+        <div class="stat-chip">
+            <div class="s-label">Net Credit</div>
+            <div class="s-value" style="color:#2b0d73;">₹ <%= String.format("%.2f", dealerCredit) %></div>
+        </div>
+    </div>
 
-            boolean hasTxn = false;
-            while(rsTxn.next()) {
-                hasTxn = true;
-        %>
-        <tr>
-            <td><%= rsTxn.getInt("ID") %></td>
-            <td><%= rsTxn.getTimestamp("TRANSACTION_DATE") %></td>
-            <td><%= rsTxn.getString("TRANSACTION_TYPE") %></td>
-            <td><%= rsTxn.getDouble("AMOUNT") %></td>
-        </tr>
-        <%  } 
-            if(!hasTxn) {
-        %>
-        <tr>
-            <td colspan="4">No transactions found.</td>
-        </tr>
-        <%  } %>
-    </table>
+    <!-- Transaction History -->
+    <h3 style="font-size:16px; color:#373279; font-weight:700; margin-bottom:12px;
+               border-bottom:2px solid #c8b7f6; padding-bottom:8px;">
+        📊 Transaction History
+    </h3>
 
-    <%
-                } else {
-                    out.println("<p style='text-align:center; color:white;'>Dealer not found.</p>");
+    <div class="table-container">
+        <table>
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Txn ID</th>
+                    <th>Date</th>
+                    <th>Type</th>
+                    <th>Amount (₹)</th>
+                </tr>
+            </thead>
+            <tbody>
+            <%
+                int sNo = 1;
+                try (Connection conn = DBConnection.getConnection()) {
+                    PreparedStatement ps = conn.prepareStatement(
+                        "SELECT * FROM dealer_transactions WHERE dealer_id = ? ORDER BY transaction_date DESC");
+                    ps.setInt(1, dealerId);
+                    ResultSet rs = ps.executeQuery();
+                    boolean hasTxn = false;
+
+                    while (rs.next()) {
+                        hasTxn = true;
+                        String type = rs.getString("transaction_type");
+            %>
+                <tr>
+                    <td><%= sNo++ %></td>
+                    <td><strong><%= rs.getInt("id") %></strong></td>
+                    <td><%= rs.getTimestamp("transaction_date") %></td>
+                    <td>
+                        <% if ("ADD".equals(type)) { %>
+                        <span class="badge-add">➕ ADD</span>
+                        <% } else { %>
+                        <span class="badge-settle">✅ SETTLE</span>
+                        <% } %>
+                    </td>
+                    <td style="font-weight:700;
+                        color:<%= "ADD".equals(type) ? "#2e7d32" : "#c62828" %>;">
+                        ₹ <%= String.format("%.2f", rs.getDouble("amount")) %>
+                    </td>
+                </tr>
+            <%
+                    }
+                    if (!hasTxn) {
+            %>
+                <tr><td colspan="5" class="no-data">No transactions found for this dealer.</td></tr>
+            <%
+                    }
+                } catch (Exception e) {
+            %>
+                <tr><td colspan="5" class="no-data">❌ Error: <%= e.getMessage() %></td></tr>
+            <%
                 }
-            } catch (Exception e) {
-                out.println("<p style='text-align:center; color:white;'>Error: " + e.getMessage() + "</p>");
-            }
-        }
-    %>
+            %>
+            </tbody>
+        </table>
+    </div>
+</div>
 
-    <h1><a href="view_dealers.jsp" class="back-link">Back to Dealer List</a></h1>
 </body>
 </html>

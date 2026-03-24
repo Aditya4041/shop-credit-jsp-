@@ -1,5 +1,5 @@
-<%@ page import="java.sql.*, doa.DBConnection" %>
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
+<%@ page import="java.sql.*, doa.DBConnection" %>
 <%
     if (session.getAttribute("admin") == null) {
         response.sendRedirect("login.jsp?error=Please login first");
@@ -7,135 +7,132 @@
     }
 %>
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-
+    <meta charset="UTF-8">
     <title>View Dealers</title>
-    <style>
-        body {
-            font-family: 'Poppins', sans-serif;
-            background: linear-gradient(135deg, #1a1a2e, #16213e);
-            color: white;
-            margin: 0;
-            text-align: center;
-        }
-        .navbar {
-    background-color: #2e2e4d;
-    padding: 15px;
-    display: flex;
-    justify-content: center;
-    gap: 30px;
-}
-
-.navbar a {
-    color: #ffffff;
-    text-decoration: none;
-    font-weight: bold;
-    transition: 0.3s;
-}
-
-.navbar a:hover {
-    color: #6c63ff;
-}
-      table {
-            width: 90%;
-            margin: 20px auto;
-            border-collapse: collapse;
-            background-color: #2e2e4d;
-            color: #ffffff;
-        }
-
-        th, td {
-            padding: 10px;
-            border: 1px solid #444;
-            text-align: center;
-        }
-
-        th {
-            background-color: #1e1e2f;
-        }
-
-        button {
-            background-color: #e94560;
-            border: none;
-            padding: 8px 15px;
-            color: #fff;
-            border-radius: 8px;
-            cursor: pointer;
-        }
-        button:hover {
-            background-color: #ff5f7e;
-        }
-        input[type="number"] {
-            width: 80px;
-            padding: 5px;
-            border-radius: 5px;
-            border: none;
-        }
-    </style>
+    <link rel="stylesheet" href="css/content.css">
 </head>
 <body>
 
-  <jsp:include page="navbar.jsp" />
+<!-- Page Header -->
+<div class="page-header">
+    <div>
+        <h2>📋 Dealer List</h2>
+        <div class="breadcrumb">Home › View Dealers</div>
+    </div>
+    <button class="btn-save" style="padding:8px 18px; font-size:13px;"
+            onclick="parent.loadPage('add_dealer.jsp','Add Dealer',null)">+ Add Dealer</button>
+</div>
 
-    <h2>Dealer List</h2>
-    <%
-        try (Connection conn = DBConnection.getConnection()) {
-            Statement stmt = conn.createStatement();
-            ResultSet rs = stmt.executeQuery("SELECT * FROM dealers ORDER BY id");
-    %>
+<div class="content-wrapper">
+
+    <!-- Status messages -->
+    <% if (request.getParameter("success") != null) { %>
+    <div class="alert alert-success">✅ <%= request.getParameter("success") %></div>
+    <% } %>
+    <% if (request.getParameter("error") != null) { %>
+    <div class="alert alert-error">❌ <%= request.getParameter("error") %></div>
+    <% } %>
+
+    <!-- Table -->
+    <div class="table-container">
         <table>
-            <tr>
-                <th>ID</th>
-                <th>Dealer Name</th>
-                <th>Phone</th>
-                <th>Total Credit</th>
-                <th>Add Credit</th>
-                <th>Settle Credit</th>
-                <th>View Details</th>
-            </tr>
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Dealer Name</th>
+                    <th>Phone</th>
+                    <th>Total Credit (₹)</th>
+                    <th>Add Credit</th>
+                    <th>Settle Credit</th>
+                    <th>Details</th>
+                </tr>
+            </thead>
+            <tbody>
             <%
-                while (rs.next()) {
-                    int id = rs.getInt("id");
-                    String name = rs.getString("name");
-                    String phone = rs.getString("phone");
-                    double credit = rs.getDouble("credit");
+                try (Connection conn = DBConnection.getConnection();
+                     java.sql.Statement stmt = conn.createStatement();
+                     ResultSet rs = stmt.executeQuery("SELECT * FROM dealers ORDER BY id")) {
+
+                    boolean hasData = false;
+                    while (rs.next()) {
+                        hasData = true;
+                        int    id     = rs.getInt("id");
+                        String name   = rs.getString("name");
+                        String phone  = rs.getString("phone");
+                        double credit = rs.getDouble("credit");
             %>
-            <tr>
-                <td><%= id %></td>
-                <td><%= name %></td>
-                <td><%= phone %></td>
-                <td><%= credit %></td>
-                <td>
-                    <form action="AddDealerCreditServlet" method="post">
-                        <input type="hidden" name="id" value="<%= id %>">
-                        <input type="number" step="0.01" name="additionalCredit" required>
-                        <button type="submit">Add</button>
-                    </form>
-                </td>
-                <td>
-                    <form action="SettleDealerCreditServlet" method="post">
-                        <input type="hidden" name="id" value="<%= id %>">
-                        <input type="number" step="0.01" name="settleAmount" required>
-                        <button type="submit">Settle</button>
-                    </form>
-                </td>
-                <td>
-                    <form action="dealerdetails.jsp" method="get">
-    					<input type="hidden" name="dealer_id" value="<%= id %>">
-    					<button type="submit">View Details</button>
-					</form>
-                </td>
-            </tr>
+                <tr>
+                    <td><strong>#<%= id %></strong></td>
+                    <td style="text-align:left; font-weight:600; color:#2b0d73;">
+                        <span style="font-size:16px;">🏬</span> <%= name %>
+                    </td>
+                    <td>📞 <%= phone %></td>
+                    <td>
+                        <span class="credit-val" id="dcredit-<%= id %>">****</span>
+                        <button class="btn-toggle" id="dtog-<%= id %>"
+                                onclick="toggleCredit(<%= id %>, <%= credit %>)">Show</button>
+                    </td>
+                    <td>
+                        <form action="<%=request.getContextPath()%>/AddDealerCreditServlet" method="post">
+                            <input type="hidden" name="id" value="<%= id %>">
+                            <div class="action-group">
+                                <input type="number" step="0.01" min="0.01" name="additionalCredit"
+                                       placeholder="Amount" required>
+                                <button type="submit" class="btn-add">Add</button>
+                            </div>
+                        </form>
+                    </td>
+                    <td>
+                        <form action="<%=request.getContextPath()%>/SettleDealerCreditServlet" method="post">
+                            <input type="hidden" name="id" value="<%= id %>">
+                            <div class="action-group">
+                                <input type="number" step="0.01" min="0.01" name="settleAmount"
+                                       placeholder="Amount" required>
+                                <button type="submit" class="btn-settle">Settle</button>
+                            </div>
+                        </form>
+                    </td>
+                    <td>
+                        <a href="dealerdetails.jsp?dealer_id=<%= id %>" class="btn-view"
+                           onclick="parent.updateParentBreadcrumb('Dealer Details','dealerdetails.jsp')">
+                           📄 View
+                        </a>
+                    </td>
+                </tr>
+            <%
+                    }
+                    if (!hasData) {
+            %>
+                <tr><td colspan="7" class="no-data">⚠ No dealers found.</td></tr>
+            <%
+                    }
+                } catch (Exception e) {
+            %>
+                <tr><td colspan="7" class="no-data">❌ Error: <%= e.getMessage() %></td></tr>
             <%
                 }
             %>
+            </tbody>
         </table>
-    <%
-        } catch (Exception e) {
-            out.println("<p>Error: " + e.getMessage() + "</p>");
-        }
-    %>
+    </div>
+</div>
 
+<script>
+function toggleCredit(id, amount) {
+    var span = document.getElementById('dcredit-' + id);
+    var btn  = document.getElementById('dtog-'    + id);
+    if (span.textContent === '****') {
+        span.textContent = '₹ ' + amount.toFixed(2);
+        btn.textContent  = 'Hide';
+        btn.style.background = '#2b0d73';
+    } else {
+        span.textContent = '****';
+        btn.textContent  = 'Show';
+        btn.style.background = '';
+    }
+}
+</script>
 </body>
 </html>

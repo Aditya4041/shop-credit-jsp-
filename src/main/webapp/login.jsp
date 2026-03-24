@@ -1,85 +1,64 @@
-<%@ page contentType="text/html;charset=UTF-8" %>
+<%@ page contentType="text/html;charset=UTF-8" language="java" %>
+<%
+    // If already logged in, redirect to main
+    if (session.getAttribute("admin") != null) {
+        response.sendRedirect("main.jsp");
+        return;
+    }
+    String errorMsg = request.getParameter("error");
+    String logoutMsg = request.getParameter("logout");
+%>
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Admin Login | Shop Credit Manager</title>
-    <link rel="stylesheet" href="style.css">
-    <style>
-        .login-container {
-            background-color: #2e2e4d;
-            width: 400px;
-            margin: 100px auto;
-            padding: 40px;
-            border-radius: 16px;
-            box-shadow: 0 0 20px rgba(0,0,0,0.5);
-        }
-
-        .login-container h2 {
-            margin-bottom: 25px;
-            color: #ffffff;
-        }
-
-        .login-container input[type="text"],
-        .login-container input[type="password"] {
-            width: 80%;
-            padding: 10px;
-            border-radius: 8px;
-            border: none;
-            margin-bottom: 20px;
-            text-align: center;
-            background-color: #1e1e2f;
-            color: #fff;
-        }
-
-        .login-container input::placeholder {
-            color: #aaa;
-        }
-
-        .login-container input[type="submit"] {
-            width: 85%;
-            background-color: #6c63ff;
-            color: white;
-            font-weight: bold;
-            border: none;
-            border-radius: 8px;
-            padding: 10px;
-            cursor: pointer;
-            transition: 0.3s;
-        }
-
-        .login-container input[type="submit"]:hover {
-            background-color: #574fd1;
-        }
-
-        .error, .success {
-            margin-top: 15px;
-            font-weight: bold;
-        }
-
-        .error { color: #ff4d4d; }
-        .success { color: #6c63ff; }
-    </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login — Mauali Tredars</title>
+    <link rel="stylesheet" href="css/login.css">
 </head>
 <body>
 
-<h1 style="margin-top:40px;">Shop Credit Manager</h1>
-
 <div class="login-container">
-    <h2>Admin Login</h2>
 
-    <form action="LoginServlet" method="post">
-        <input type="text" name="username" placeholder="Enter Username" required><br>
-        <input type="password" name="password" placeholder="Enter Password" required><br>
-        <input type="submit" value="Login">
-    </form>
+    <!-- Brand -->
+    <div class="brand-section">
+        <div class="brand-icon">🏪</div>
+        <div class="brand-title">Mauali Tredars</div>
+        <div class="brand-sub">Shop Credit Management System — Secure Access</div>
+    </div>
 
-    <% if(request.getParameter("error") != null) { %>
-        <p class="error"><%= request.getParameter("error") %></p>
-    <% } %>
+    <!-- Login Card -->
+    <div class="login-card">
+        <h2>Admin Login</h2>
 
-    <% if(request.getParameter("logout") != null) { %>
-        <p class="success">Logged out successfully.</p>
-    <% } %>
+        <% if (errorMsg != null) { %>
+        <div class="error-msg">❌ <%= errorMsg %></div>
+        <% } %>
+        <% if (logoutMsg != null) { %>
+        <div class="error-msg" style="background:rgba(0,200,100,0.15); border-color:rgba(0,200,100,0.4); color:#d0ffe8;">
+            ✅ Logged out successfully.
+        </div>
+        <% } %>
+
+        <form action="LoginServlet" method="post" autocomplete="off">
+
+            <div class="field-group">
+                <label for="username">👤 Username</label>
+                <input type="text" id="username" name="username"
+                       placeholder="Enter your username" required autofocus>
+            </div>
+
+            <div class="field-group">
+                <label for="password">🔒 Password</label>
+                <input type="password" id="password" name="password"
+                       placeholder="Enter your password" required>
+            </div>
+
+            <button type="submit" class="btn-login">Login →</button>
+        </form>
+    </div>
+
+    <div class="login-footer">© 2025 Mauali Tredars. All rights reserved.</div>
 </div>
 
 </body>
