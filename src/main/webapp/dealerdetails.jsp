@@ -46,14 +46,26 @@
     <meta charset="UTF-8">
     <title>Dealer Details</title>
     <link rel="stylesheet" href="css/content.css">
+    <style>
+        .product-tag {
+            background: #e8f0fe;
+            color: #1a56db;
+            padding: 3px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+        .product-tag.settle {
+            background: #fef3e2;
+            color: #b45309;
+        }
+    </style>
 </head>
 <body>
 
-
-
 <div class="content-wrapper">
 
-    <!-- Back Link -->
     <a href="view_dealers.jsp" class="back-link">← Back to Dealer List</a>
 
     <!-- Dealer Info Card -->
@@ -110,6 +122,7 @@
                     <th>Txn ID</th>
                     <th>Date</th>
                     <th>Type</th>
+                    <th>Product / Item</th>
                     <th>Amount (₹)</th>
                 </tr>
             </thead>
@@ -125,7 +138,9 @@
 
                     while (rs.next()) {
                         hasTxn = true;
-                        String type = rs.getString("transaction_type");
+                        String type     = rs.getString("transaction_type");
+                        String prodName = rs.getString("product_name");
+                        if (prodName == null || prodName.trim().isEmpty()) prodName = "—";
             %>
                 <tr>
                     <td><%= sNo++ %></td>
@@ -138,6 +153,11 @@
                         <span class="badge-settle">✅ SETTLE</span>
                         <% } %>
                     </td>
+                    <td>
+                        <span class="product-tag <%= "SETTLE".equals(type) ? "settle" : "" %>">
+                            📦 <%= prodName %>
+                        </span>
+                    </td>
                     <td style="font-weight:700;
                         color:<%= "ADD".equals(type) ? "#2e7d32" : "#c62828" %>;">
                         ₹ <%= String.format("%.2f", rs.getDouble("amount")) %>
@@ -147,12 +167,12 @@
                     }
                     if (!hasTxn) {
             %>
-                <tr><td colspan="5" class="no-data">No transactions found for this dealer.</td></tr>
+                <tr><td colspan="6" class="no-data">No transactions found for this dealer.</td></tr>
             <%
                     }
                 } catch (Exception e) {
             %>
-                <tr><td colspan="5" class="no-data">❌ Error: <%= e.getMessage() %></td></tr>
+                <tr><td colspan="6" class="no-data">❌ Error: <%= e.getMessage() %></td></tr>
             <%
                 }
             %>

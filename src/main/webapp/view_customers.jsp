@@ -15,30 +15,47 @@
     <title>View Customers</title>
     <link rel="stylesheet" href="css/content.css">
     <style>
-        /* ── Eye-icon toggle button ── */
+        /* Eye toggle */
         .btn-eye {
-            background: none;
-            border: none;
-            cursor: pointer;
-            padding: 3px 5px;
-            color: #7c73b8;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: 5px;
-            transition: color 0.2s, background 0.2s;
-            vertical-align: middle;
-            outline: none;
+            background: none; border: none; cursor: pointer;
+            padding: 3px 5px; color: #7c73b8;
+            display: inline-flex; align-items: center; justify-content: center;
+            border-radius: 5px; transition: color 0.2s, background 0.2s;
+            vertical-align: middle; outline: none;
         }
         .btn-eye:hover { color: #2b0d73; background: #ede9ff; }
         .btn-eye svg   { display: block; pointer-events: none; }
+
+        /* Action nav buttons */
+        .btn-action-add {
+            padding: 6px 16px;
+            background: linear-gradient(135deg, #4caf50, #2e7d32);
+            color: #fff; border: none; border-radius: 7px;
+            font-size: 12px; font-weight: 700; cursor: pointer;
+            text-decoration: none; display: inline-block;
+            transition: opacity 0.2s, transform 0.15s;
+            white-space: nowrap;
+        }
+        .btn-action-add:hover { opacity: 0.88; transform: scale(1.04); }
+
+        .btn-action-settle {
+            padding: 6px 16px;
+            background: linear-gradient(135deg, #e53935, #b71c1c);
+            color: #fff; border: none; border-radius: 7px;
+            font-size: 12px; font-weight: 700; cursor: pointer;
+            text-decoration: none; display: inline-block;
+            transition: opacity 0.2s, transform 0.15s;
+            white-space: nowrap;
+        }
+        .btn-action-settle:hover { opacity: 0.88; transform: scale(1.04); }
+
+        .action-btns { display: flex; gap: 6px; justify-content: center; flex-wrap: wrap; }
     </style>
 </head>
 <body>
 
 <div class="content-wrapper">
 
-    <!-- Status messages -->
     <% if (request.getParameter("success") != null) { %>
     <div class="alert alert-success">✅ <%= request.getParameter("success") %></div>
     <% } %>
@@ -63,8 +80,7 @@
                     <th>Name</th>
                     <th>Phone</th>
                     <th>Credit (₹)</th>
-                    <th>Add Credit</th>
-                    <th>Settle Credit</th>
+                    <th>Actions</th>
                     <th>Details</th>
                 </tr>
             </thead>
@@ -102,18 +118,15 @@
                     <td>📞 <%= phone %></td>
                     <td>
                         <span class="credit-val" id="credit-<%= id %>">••••••</span>
-                        <!-- Eye toggle button -->
                         <button class="btn-eye" id="tog-<%= id %>"
                                 onclick="toggleCredit(<%= id %>, <%= credit %>)"
                                 title="Show / Hide credit">
-                            <!-- Eye-open icon (default) -->
                             <svg id="eye-open-<%= id %>" width="18" height="18" viewBox="0 0 24 24"
                                  fill="none" stroke="currentColor" stroke-width="2"
                                  stroke-linecap="round" stroke-linejoin="round">
                                 <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
                                 <circle cx="12" cy="12" r="3"/>
                             </svg>
-                            <!-- Eye-closed icon (hidden) -->
                             <svg id="eye-closed-<%= id %>" width="18" height="18" viewBox="0 0 24 24"
                                  fill="none" stroke="currentColor" stroke-width="2"
                                  stroke-linecap="round" stroke-linejoin="round"
@@ -127,24 +140,12 @@
                         </button>
                     </td>
                     <td>
-                        <form action="<%=request.getContextPath()%>/AddCreditServlet" method="post">
-                            <input type="hidden" name="id" value="<%= id %>">
-                            <div class="action-group">
-                                <input type="number" step="0.01" min="0.01" name="additionalCredit"
-                                       placeholder="Amount" required>
-                                <button type="submit" class="btn-add">Add</button>
-                            </div>
-                        </form>
-                    </td>
-                    <td>
-                        <form action="<%=request.getContextPath()%>/SettleCreditServlet" method="post">
-                            <input type="hidden" name="id" value="<%= id %>">
-                            <div class="action-group">
-                                <input type="number" step="0.01" min="0.01" name="settleAmount"
-                                       placeholder="Amount" required>
-                                <button type="submit" class="btn-settle">Settle</button>
-                            </div>
-                        </form>
+                        <div class="action-btns">
+                            <a href="add_credit_customer.jsp?id=<%= id %>"
+                               class="btn-action-add">➕ Add Credit</a>
+                            <a href="settle_credit_customer.jsp?id=<%= id %>"
+                               class="btn-action-settle">✅ Settle</a>
+                        </div>
                     </td>
                     <td>
                         <a href="customer_details.jsp?id=<%= id %>" class="btn-view"
@@ -157,12 +158,12 @@
                     }
                     if (!hasData) {
             %>
-                <tr><td colspan="7" class="no-data">⚠ No customers found.</td></tr>
+                <tr><td colspan="6" class="no-data">⚠ No customers found.</td></tr>
             <%
                     }
                 } catch (Exception e) {
             %>
-                <tr><td colspan="7" class="no-data">❌ Error: <%= e.getMessage() %></td></tr>
+                <tr><td colspan="6" class="no-data">❌ Error: <%= e.getMessage() %></td></tr>
             <%
                 }
             %>
@@ -178,12 +179,10 @@ function toggleCredit(id, amount) {
     var eyeClosed = document.getElementById('eye-closed-' + id);
 
     if (span.textContent === '••••••') {
-        // Show credit
         span.textContent        = '₹ ' + parseFloat(amount).toFixed(2);
         eyeOpen.style.display   = 'none';
         eyeClosed.style.display = 'block';
     } else {
-        // Hide credit
         span.textContent        = '••••••';
         eyeOpen.style.display   = 'block';
         eyeClosed.style.display = 'none';
