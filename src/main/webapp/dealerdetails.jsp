@@ -49,13 +49,7 @@
 </head>
 <body>
 
-<!-- Page Header -->
-<div class="page-header">
-    <div>
-        <h2>📄 Dealer Details</h2>
-        <div class="breadcrumb">Home › View Dealers › Details</div>
-    </div>
-</div>
+
 
 <div class="content-wrapper">
 

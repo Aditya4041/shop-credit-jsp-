@@ -49,13 +49,7 @@
 </head>
 <body>
 
-<!-- Page Header -->
-<div class="page-header">
-    <div>
-        <h2>📄 Customer Details</h2>
-        <div class="breadcrumb">Home › View Customers › Details</div>
-    </div>
-</div>
+
 
 <div class="content-wrapper">
 

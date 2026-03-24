@@ -22,7 +22,6 @@
     <div class="profile-section">
         <div class="profile-avatar" id="avatarEl">👤</div>
         <div class="user-name"><%= adminUser.toUpperCase() %></div>
-        <div class="user-role">Administrator</div>
     </div>
 
     <ul class="menu" id="mainMenu">

@@ -14,13 +14,6 @@
 </head>
 <body>
 
-<!-- Page Header -->
-<div class="page-header">
-    <div>
-        <h2>➕ Add New Customer</h2>
-        <div class="breadcrumb">Home › Add Customer</div>
-    </div>
-</div>
 
 <div class="form-container">
 

@@ -51,11 +51,6 @@
 </head>
 <body>
 
-<div class="welcome-banner">
-    <h1>👋 Welcome, Admin</h1>
-    <p>Here's a summary of your shop's credit status</p>
-</div>
-
 <div class="section-label">Quick Actions</div>
 
 <div class="cards-grid" style="padding-top: 8px;">

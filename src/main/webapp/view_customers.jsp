@@ -17,15 +17,7 @@
 </head>
 <body>
 
-<!-- Page Header -->
-<div class="page-header">
-    <div>
-        <h2>👥 Customer List</h2>
-        <div class="breadcrumb">Home › View Customers</div>
-    </div>
-    <button class="btn-save" style="padding:8px 18px; font-size:13px;"
-            onclick="parent.loadPage('add_customer.jsp','Add Customer',null)">+ Add Customer</button>
-</div>
+
 
 <div class="content-wrapper">
 

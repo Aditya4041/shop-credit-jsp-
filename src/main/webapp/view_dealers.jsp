@@ -15,15 +15,6 @@
 </head>
 <body>
 
-<!-- Page Header -->
-<div class="page-header">
-    <div>
-        <h2>📋 Dealer List</h2>
-        <div class="breadcrumb">Home › View Dealers</div>
-    </div>
-    <button class="btn-save" style="padding:8px 18px; font-size:13px;"
-            onclick="parent.loadPage('add_dealer.jsp','Add Dealer',null)">+ Add Dealer</button>
-</div>
 
 <div class="content-wrapper">
 
