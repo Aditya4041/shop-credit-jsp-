@@ -16,7 +16,8 @@
     double custCredit = 0;
 
     try (Connection conn = DBConnection.getConnection()) {
-        PreparedStatement ps = conn.prepareStatement("SELECT name, phone, credit FROM customers WHERE id = ?");
+        PreparedStatement ps = conn.prepareStatement(
+            "SELECT name, phone, credit FROM customers WHERE id = ?");
         ps.setInt(1, customerId);
         ResultSet rs = ps.executeQuery();
         if (rs.next()) {
@@ -94,6 +95,40 @@
             border-color: #7c73b8;
             box-shadow: 0 0 0 3px rgba(124,115,184,0.15);
         }
+
+        /* ── Stock indicator strip ── */
+        .stock-strip {
+            display: none;
+            align-items: center;
+            gap: 10px;
+            background: #f0f4ff;
+            border: 1px solid #c8d8f8;
+            border-radius: 8px;
+            padding: 8px 14px;
+            margin-top: 8px;
+            font-size: 13px;
+            color: #2b0d73;
+            font-weight: 600;
+        }
+        .stock-strip .stock-num {
+            background: #2b0d73;
+            color: #fff;
+            border-radius: 20px;
+            padding: 2px 12px;
+            font-size: 13px;
+            font-weight: 700;
+        }
+        .stock-strip.low  { background: #fff8e1; border-color: #ffe082; color: #7a5c00; }
+        .stock-strip.low  .stock-num { background: #f5a623; color: #fff; }
+        .stock-strip.zero { background: #ffebee; border-color: #ffcdd2; color: #b71c1c; }
+        .stock-strip.zero .stock-num { background: #e53935; color: #fff; }
+
+        /* ── Max qty hint ── */
+        .max-hint {
+            font-size: 12px;
+            color: #888;
+            margin-top: 4px;
+        }
     </style>
 </head>
 <body>
@@ -130,35 +165,56 @@
 
                 <div class="form-grid">
 
+                    <!-- Product Dropdown -->
                     <div class="form-group full-width">
                         <label for="productId">📦 Product / Item <span style="color:#e53935;">*</span></label>
-                        <select id="productId" name="productId" class="custom-select" required>
-                            <option value="" disabled selected>— Select a product —</option>
+                        <select id="productId" name="productId" class="custom-select"
+                                required onchange="onProductChange(this)">
+                            <option value="" disabled selected data-stock="0">— Select a product —</option>
                             <%
                                 try (Connection conn = DBConnection.getConnection()) {
                                     ResultSet prs = conn.createStatement()
-                                        .executeQuery("SELECT id, product_name, quantity FROM products ORDER BY product_name ASC");
+                                        .executeQuery(
+                                            "SELECT id, product_name, quantity " +
+                                            "FROM products ORDER BY product_name ASC");
                                     while (prs.next()) {
                                         int    pid  = prs.getInt("id");
                                         String pnm  = prs.getString("product_name");
                                         int    pqty = prs.getInt("quantity");
+                                        String label = pnm + " \u00a0(Stock: " + pqty + ")";
                             %>
-                            <option value="<%= pid %>" data-name="<%= pnm %>">
-                                <%= pnm %> &nbsp;(Stock: <%= pqty %>)
+                            <option value="<%= pid %>"
+                                    data-name="<%= pnm %>"
+                                    data-stock="<%= pqty %>">
+                                <%= label %>
                             </option>
                             <%      }
                                 } catch (Exception ex) { /* ignore */ }
                             %>
                         </select>
+                        <!-- Dynamic stock display -->
+                        <div class="stock-strip" id="stockStrip">
+                            Available stock: <span class="stock-num" id="stockNum">—</span>
+                        </div>
                     </div>
 
-                    <div class="form-group full-width">
+                    <!-- Quantity -->
+                    <div class="form-group">
+                        <label for="quantity">🔢 Quantity <span style="color:#e53935;">*</span></label>
+                        <input type="number" id="quantity" name="quantity"
+                               placeholder="0" min="1" required
+                               oninput="checkQtyLimit(this)">
+                        <div class="max-hint" id="maxHint"></div>
+                    </div>
+
+                    <!-- Credit Amount -->
+                    <div class="form-group">
                         <label for="additionalCredit">💰 Credit Amount (₹) <span style="color:#e53935;">*</span></label>
                         <input type="number" id="additionalCredit" name="additionalCredit"
                                placeholder="0.00" step="0.01" min="0.01" required>
                     </div>
 
-                    <!-- Hidden field to carry product name to servlet -->
+                    <!-- Hidden field: product name for servlet -->
                     <input type="hidden" id="productName" name="productName" value="">
 
                 </div>
@@ -166,7 +222,10 @@
 
             <div class="form-buttons">
                 <button type="submit" class="btn-save">💾 Add Credit</button>
-                <a href="view_customers.jsp" class="btn-clear" style="text-decoration:none; display:inline-flex; align-items:center; justify-content:center;">Cancel</a>
+                <a href="view_customers.jsp" class="btn-clear"
+                   style="text-decoration:none; display:inline-flex; align-items:center; justify-content:center;">
+                    Cancel
+                </a>
             </div>
         </form>
     </div>
@@ -174,16 +233,49 @@
 </div>
 
 <script>
-// Keep productName hidden field in sync with selected option's data-name
-document.getElementById('productId').addEventListener('change', function () {
-    var opt = this.options[this.selectedIndex];
-    document.getElementById('productName').value = opt.getAttribute('data-name') || '';
-});
+var currentStock = 0;
+
+function onProductChange(sel) {
+    var opt   = sel.options[sel.selectedIndex];
+    var name  = opt.getAttribute('data-name') || '';
+    var stock = parseInt(opt.getAttribute('data-stock') || '0', 10);
+
+    document.getElementById('productName').value = name;
+    currentStock = stock;
+
+    // Reset quantity max and hint
+    var qtyInput = document.getElementById('quantity');
+    qtyInput.max = stock;
+    qtyInput.value = '';
+
+    // Update stock strip
+    var strip = document.getElementById('stockStrip');
+    var num   = document.getElementById('stockNum');
+    num.textContent = stock;
+    strip.style.display = 'flex';
+    strip.className = 'stock-strip';
+    if (stock === 0)       strip.classList.add('zero');
+    else if (stock <= 10)  strip.classList.add('low');
+
+    // Max hint
+    document.getElementById('maxHint').textContent =
+        stock > 0 ? 'Max: ' + stock + ' units available' : 'Out of stock — cannot add';
+}
+
+function checkQtyLimit(input) {
+    if (currentStock > 0 && parseInt(input.value) > currentStock) {
+        input.value = currentStock;
+    }
+}
 
 function validateForm() {
     var pid    = document.getElementById('productId').value;
+    var qty    = parseInt(document.getElementById('quantity').value, 10);
     var amount = document.getElementById('additionalCredit').value;
-    if (!pid)   { alert('⚠️ Please select a product.'); return false; }
+
+    if (!pid)                      { alert('⚠️ Please select a product.');        return false; }
+    if (!qty || qty <= 0)          { alert('⚠️ Please enter a valid quantity.');   return false; }
+    if (qty > currentStock)        { alert('⚠️ Quantity exceeds available stock (' + currentStock + ').'); return false; }
     if (!amount || parseFloat(amount) <= 0) { alert('⚠️ Please enter a valid amount.'); return false; }
     return true;
 }

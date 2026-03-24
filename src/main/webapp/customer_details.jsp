@@ -60,6 +60,28 @@
             background: #fef3e2;
             color: #b45309;
         }
+        /* Quantity pill */
+        .qty-pill {
+            display: inline-block;
+            background: #f0f4ff;
+            color: #2b0d73;
+            border: 1px solid #c8d8f8;
+            border-radius: 20px;
+            padding: 2px 12px;
+            font-size: 12px;
+            font-weight: 700;
+        }
+        .qty-pill.settle {
+            background: #fef3e2;
+            color: #92400e;
+            border-color: #fde68a;
+        }
+        .qty-pill.na {
+            background: #f5f5f5;
+            color: #aaa;
+            border-color: #e0e0e0;
+            font-weight: 400;
+        }
     </style>
 </head>
 <body>
@@ -123,6 +145,7 @@
                     <th>Date</th>
                     <th>Type</th>
                     <th>Product / Item</th>
+                    <th>Quantity</th>
                     <th>Amount (₹)</th>
                 </tr>
             </thead>
@@ -131,35 +154,46 @@
                 int sNo = 1;
                 try (Connection conn = DBConnection.getConnection()) {
                     PreparedStatement ps = conn.prepareStatement(
-                        "SELECT * FROM customer_transactions WHERE customer_id = ? ORDER BY transaction_date DESC");
+                        "SELECT * FROM customer_transactions " +
+                        "WHERE customer_id = ? ORDER BY transaction_date DESC");
                     ps.setInt(1, customerId);
                     ResultSet rs = ps.executeQuery();
                     boolean hasTxn = false;
 
                     while (rs.next()) {
                         hasTxn = true;
-                        String type    = rs.getString("transaction_type");
+                        String type     = rs.getString("transaction_type");
                         String prodName = rs.getString("product_name");
+                        int    qty      = rs.getInt("quantity");  // 0 for SETTLE rows
                         if (prodName == null || prodName.trim().isEmpty()) prodName = "—";
+                        boolean isAdd = "ADD".equals(type);
             %>
                 <tr>
                     <td><%= sNo++ %></td>
                     <td><strong><%= rs.getInt("id") %></strong></td>
                     <td><%= rs.getDate("transaction_date") %></td>
                     <td>
-                        <% if ("ADD".equals(type)) { %>
+                        <% if (isAdd) { %>
                         <span class="badge-add">➕ ADD</span>
                         <% } else { %>
                         <span class="badge-settle">✅ SETTLE</span>
                         <% } %>
                     </td>
                     <td>
-                        <span class="product-tag <%= "SETTLE".equals(type) ? "settle" : "" %>">
+                        <span class="product-tag <%= isAdd ? "" : "settle" %>">
                             📦 <%= prodName %>
                         </span>
                     </td>
-                    <td style="font-weight:700;
-                        color:<%= "ADD".equals(type) ? "#2e7d32" : "#c62828" %>;">
+                    <td>
+                        <% if (isAdd && qty > 0) { %>
+                        <span class="qty-pill"><%= qty %> unit<%= qty != 1 ? "s" : "" %></span>
+                        <% } else if (!isAdd) { %>
+                        <span class="qty-pill settle">—</span>
+                        <% } else { %>
+                        <span class="qty-pill na">—</span>
+                        <% } %>
+                    </td>
+                    <td style="font-weight:700; color:<%= isAdd ? "#2e7d32" : "#c62828" %>;">
                         ₹ <%= String.format("%.2f", rs.getDouble("amount")) %>
                     </td>
                 </tr>
@@ -167,12 +201,16 @@
                     }
                     if (!hasTxn) {
             %>
-                <tr><td colspan="6" class="no-data">No transactions found for this customer.</td></tr>
+                <tr>
+                    <td colspan="7" class="no-data">No transactions found for this customer.</td>
+                </tr>
             <%
                     }
                 } catch (Exception e) {
             %>
-                <tr><td colspan="6" class="no-data">❌ Error: <%= e.getMessage() %></td></tr>
+                <tr>
+                    <td colspan="7" class="no-data">❌ Error: <%= e.getMessage() %></td>
+                </tr>
             <%
                 }
             %>

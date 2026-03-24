@@ -16,7 +16,8 @@
     double dealerCredit = 0;
 
     try (Connection conn = DBConnection.getConnection()) {
-        PreparedStatement ps = conn.prepareStatement("SELECT name, phone, credit FROM dealers WHERE id = ?");
+        PreparedStatement ps = conn.prepareStatement(
+            "SELECT name, phone, credit FROM dealers WHERE id = ?");
         ps.setInt(1, dealerId);
         ResultSet rs = ps.executeQuery();
         if (rs.next()) {
@@ -94,6 +95,67 @@
             border-color: #7c73b8;
             box-shadow: 0 0 0 3px rgba(124,115,184,0.15);
         }
+
+        /* ── Stock info strip (shows current stock, will increase after save) ── */
+        .stock-strip {
+            display: none;
+            align-items: center;
+            gap: 10px;
+            background: #e8f5e9;
+            border: 1px solid #a5d6a7;
+            border-radius: 8px;
+            padding: 8px 14px;
+            margin-top: 8px;
+            font-size: 13px;
+            color: #1b5e20;
+            font-weight: 600;
+        }
+        .stock-strip .stock-num {
+            background: #2e7d32;
+            color: #fff;
+            border-radius: 20px;
+            padding: 2px 12px;
+            font-size: 13px;
+            font-weight: 700;
+        }
+
+        /* ── After-add preview pill ── */
+        .preview-strip {
+            display: none;
+            align-items: center;
+            gap: 8px;
+            background: #f0f4ff;
+            border: 1px solid #c8d8f8;
+            border-radius: 8px;
+            padding: 8px 14px;
+            margin-top: 6px;
+            font-size: 13px;
+            color: #2b0d73;
+            font-weight: 600;
+        }
+        .preview-strip .arrow { color: #4caf50; font-size: 16px; }
+        .preview-strip .new-num {
+            background: #4caf50;
+            color: #fff;
+            border-radius: 20px;
+            padding: 2px 12px;
+            font-size: 13px;
+            font-weight: 700;
+        }
+
+        /* ── Info banner explaining dealer logic ── */
+        .info-banner {
+            background: #fff8e1;
+            border-left: 4px solid #f5a623;
+            border-radius: 0 8px 8px 0;
+            padding: 10px 16px;
+            font-size: 13px;
+            color: #7a5c00;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
     </style>
 </head>
 <body>
@@ -106,6 +168,12 @@
 
     <!-- Back link -->
     <a href="view_dealers.jsp" class="back-link">← Back to Dealers</a>
+
+    <!-- Info banner -->
+    <div class="info-banner">
+        💡 <strong>Dealer Stock Logic:</strong> When a dealer supplies goods, the selected quantity is
+        <strong>added to product stock</strong>. This is the opposite of customer credit which deducts stock.
+    </div>
 
     <!-- Dealer Info Banner -->
     <div class="dealer-card">
@@ -130,43 +198,73 @@
 
                 <div class="form-grid">
 
+                    <!-- Product Dropdown -->
                     <div class="form-group full-width">
                         <label for="productId">📦 Product / Item <span style="color:#e53935;">*</span></label>
-                        <select id="productId" name="productId" class="custom-select" required>
-                            <option value="" disabled selected>— Select a product —</option>
+                        <select id="productId" name="productId" class="custom-select"
+                                required onchange="onProductChange(this)">
+                            <option value="" disabled selected data-stock="0">— Select a product —</option>
                             <%
                                 try (Connection conn = DBConnection.getConnection()) {
                                     ResultSet prs = conn.createStatement()
-                                        .executeQuery("SELECT id, product_name, quantity FROM products ORDER BY product_name ASC");
+                                        .executeQuery(
+                                            "SELECT id, product_name, quantity " +
+                                            "FROM products ORDER BY product_name ASC");
                                     while (prs.next()) {
                                         int    pid  = prs.getInt("id");
                                         String pnm  = prs.getString("product_name");
                                         int    pqty = prs.getInt("quantity");
+                                        String label = pnm + " \u00a0(Stock: " + pqty + ")";
                             %>
-                            <option value="<%= pid %>" data-name="<%= pnm %>">
-                                <%= pnm %> &nbsp;(Stock: <%= pqty %>)
+                            <option value="<%= pid %>"
+                                    data-name="<%= pnm %>"
+                                    data-stock="<%= pqty %>">
+                                <%= label %>
                             </option>
                             <%      }
                                 } catch (Exception ex) { /* ignore */ }
                             %>
                         </select>
+
+                        <!-- Current stock display -->
+                        <div class="stock-strip" id="stockStrip">
+                            Current stock: <span class="stock-num" id="stockNum">—</span>
+                        </div>
                     </div>
 
-                    <div class="form-group full-width">
+                    <!-- Quantity -->
+                    <div class="form-group">
+                        <label for="quantity">🔢 Quantity Supplied <span style="color:#e53935;">*</span></label>
+                        <input type="number" id="quantity" name="quantity"
+                               placeholder="0" min="1" required
+                               oninput="updatePreview()">
+                        <!-- Live preview of new stock after save -->
+                        <div class="preview-strip" id="previewStrip">
+                            Stock after save:
+                            <span class="arrow">↑</span>
+                            <span class="new-num" id="newStockNum">—</span>
+                        </div>
+                    </div>
+
+                    <!-- Credit Amount -->
+                    <div class="form-group">
                         <label for="additionalCredit">💰 Credit Amount (₹) <span style="color:#e53935;">*</span></label>
                         <input type="number" id="additionalCredit" name="additionalCredit"
                                placeholder="0.00" step="0.01" min="0.01" required>
                     </div>
 
-                    <!-- Hidden field to carry product name to servlet -->
+                    <!-- Hidden: product name for servlet -->
                     <input type="hidden" id="productName" name="productName" value="">
 
                 </div>
             </fieldset>
 
             <div class="form-buttons">
-                <button type="submit" class="btn-save">💾 Add Credit</button>
-                <a href="view_dealers.jsp" class="btn-clear" style="text-decoration:none; display:inline-flex; align-items:center; justify-content:center;">Cancel</a>
+                <button type="submit" class="btn-save">💾 Add Credit & Update Stock</button>
+                <a href="view_dealers.jsp" class="btn-clear"
+                   style="text-decoration:none; display:inline-flex; align-items:center; justify-content:center;">
+                    Cancel
+                </a>
             </div>
         </form>
     </div>
@@ -174,16 +272,47 @@
 </div>
 
 <script>
-document.getElementById('productId').addEventListener('change', function () {
-    var opt = this.options[this.selectedIndex];
-    document.getElementById('productName').value = opt.getAttribute('data-name') || '';
-});
+var currentStock = 0;
+
+function onProductChange(sel) {
+    var opt   = sel.options[sel.selectedIndex];
+    var name  = opt.getAttribute('data-name') || '';
+    var stock = parseInt(opt.getAttribute('data-stock') || '0', 10);
+
+    document.getElementById('productName').value = name;
+    currentStock = stock;
+
+    // Show current stock strip
+    var strip  = document.getElementById('stockStrip');
+    strip.style.display = 'flex';
+    document.getElementById('stockNum').textContent = stock;
+
+    // Reset quantity and preview
+    document.getElementById('quantity').value = '';
+    document.getElementById('previewStrip').style.display = 'none';
+}
+
+function updatePreview() {
+    var qty = parseInt(document.getElementById('quantity').value, 10);
+    var preview = document.getElementById('previewStrip');
+
+    if (!isNaN(qty) && qty > 0) {
+        var newStock = currentStock + qty;
+        document.getElementById('newStockNum').textContent = newStock + ' units';
+        preview.style.display = 'flex';
+    } else {
+        preview.style.display = 'none';
+    }
+}
 
 function validateForm() {
     var pid    = document.getElementById('productId').value;
+    var qty    = parseInt(document.getElementById('quantity').value, 10);
     var amount = document.getElementById('additionalCredit').value;
-    if (!pid)   { alert('⚠️ Please select a product.'); return false; }
-    if (!amount || parseFloat(amount) <= 0) { alert('⚠️ Please enter a valid amount.'); return false; }
+
+    if (!pid)                                    { alert('⚠️ Please select a product.');       return false; }
+    if (!qty || qty <= 0)                        { alert('⚠️ Please enter a valid quantity.');  return false; }
+    if (!amount || parseFloat(amount) <= 0)      { alert('⚠️ Please enter a valid amount.');    return false; }
     return true;
 }
 </script>
