@@ -66,6 +66,15 @@
             <span class="tooltip-label">View Dealers</span>
         </li>
 
+        <!-- ── Products (new) ── -->
+        <li data-page="view_products.jsp">
+            <a href="#" onclick="loadPage('view_products.jsp','Products',this);return false;">
+                <span class="menu-icon">📦</span>
+                <span class="menu-label">Products</span>
+            </a>
+            <span class="tooltip-label">Products</span>
+        </li>
+
     </ul>
 
     <div class="logout">
@@ -116,7 +125,6 @@ var isCollapsed = sessionStorage.getItem('sidebarCollapsed') === 'true';
 
 function applyState() {
     var sidebar = document.getElementById('sidebar');
-    var mc      = document.getElementById('mainContent');
     if (isCollapsed) {
         sidebar.classList.add('collapsed');
         document.body.classList.add('sidebar-collapsed');

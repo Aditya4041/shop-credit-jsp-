@@ -12,9 +12,27 @@
     <meta charset="UTF-8">
     <title>View Dealers</title>
     <link rel="stylesheet" href="css/content.css">
+    <style>
+        /* ── Eye-icon toggle button ── */
+        .btn-eye {
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 3px 5px;
+            color: #7c73b8;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 5px;
+            transition: color 0.2s, background 0.2s;
+            vertical-align: middle;
+            outline: none;
+        }
+        .btn-eye:hover { color: #2b0d73; background: #ede9ff; }
+        .btn-eye svg   { display: block; pointer-events: none; }
+    </style>
 </head>
 <body>
-
 
 <div class="content-wrapper">
 
@@ -61,9 +79,30 @@
                     </td>
                     <td>📞 <%= phone %></td>
                     <td>
-                        <span class="credit-val" id="dcredit-<%= id %>">****</span>
-                        <button class="btn-toggle" id="dtog-<%= id %>"
-                                onclick="toggleCredit(<%= id %>, <%= credit %>)">Show</button>
+                        <span class="credit-val" id="dcredit-<%= id %>">••••••</span>
+                        <!-- Eye toggle button -->
+                        <button class="btn-eye" id="dtog-<%= id %>"
+                                onclick="toggleCredit(<%= id %>, <%= credit %>)"
+                                title="Show / Hide credit">
+                            <!-- Eye-open icon (default) -->
+                            <svg id="deye-open-<%= id %>" width="18" height="18" viewBox="0 0 24 24"
+                                 fill="none" stroke="currentColor" stroke-width="2"
+                                 stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                                <circle cx="12" cy="12" r="3"/>
+                            </svg>
+                            <!-- Eye-closed icon (hidden) -->
+                            <svg id="deye-closed-<%= id %>" width="18" height="18" viewBox="0 0 24 24"
+                                 fill="none" stroke="currentColor" stroke-width="2"
+                                 stroke-linecap="round" stroke-linejoin="round"
+                                 style="display:none;">
+                                <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8
+                                         a18.45 18.45 0 0 1 5.06-5.94"/>
+                                <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8
+                                         a18.5 18.5 0 0 1-2.16 3.19"/>
+                                <line x1="1" y1="1" x2="23" y2="23"/>
+                            </svg>
+                        </button>
                     </td>
                     <td>
                         <form action="<%=request.getContextPath()%>/AddDealerCreditServlet" method="post">
@@ -112,16 +151,18 @@
 
 <script>
 function toggleCredit(id, amount) {
-    var span = document.getElementById('dcredit-' + id);
-    var btn  = document.getElementById('dtog-'    + id);
-    if (span.textContent === '****') {
-        span.textContent = '₹ ' + amount.toFixed(2);
-        btn.textContent  = 'Hide';
-        btn.style.background = '#2b0d73';
+    var span      = document.getElementById('dcredit-'     + id);
+    var eyeOpen   = document.getElementById('deye-open-'   + id);
+    var eyeClosed = document.getElementById('deye-closed-' + id);
+
+    if (span.textContent === '••••••') {
+        span.textContent        = '₹ ' + parseFloat(amount).toFixed(2);
+        eyeOpen.style.display   = 'none';
+        eyeClosed.style.display = 'block';
     } else {
-        span.textContent = '****';
-        btn.textContent  = 'Show';
-        btn.style.background = '';
+        span.textContent        = '••••••';
+        eyeOpen.style.display   = 'block';
+        eyeClosed.style.display = 'none';
     }
 }
 </script>
