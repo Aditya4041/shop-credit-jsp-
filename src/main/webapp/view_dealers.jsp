@@ -46,6 +46,19 @@
         .btn-action-settle:hover { opacity: 0.88; transform: scale(1.04); }
 
         .action-btns { display: flex; gap: 6px; justify-content: center; flex-wrap: wrap; }
+
+        .btn-print {
+            padding: 9px 20px;
+            background: linear-gradient(135deg, #7a3800, #d4681a);
+            color: #fff; border: none; border-radius: 8px;
+            font-family: 'Outfit', sans-serif;
+            font-size: 13.5px; font-weight: 600;
+            cursor: pointer; white-space: nowrap;
+            transition: background 0.2s;
+            display: inline-flex; align-items: center; gap: 7px;
+        }
+        .btn-print:hover { opacity: 0.88; }
+
     </style>
 </head>
 <body>
@@ -59,14 +72,17 @@
     <div class="alert alert-error">❌ <%= request.getParameter("error") %></div>
     <% } %>
 
-    <form class="search-bar" action="view_dealers.jsp" method="get">
-        <input type="text" name="keyword" placeholder="🔍 Search by Name, Phone or ID"
-               value="<%= hasKeyword ? keyword : "" %>">
-        <button type="submit" class="btn-search">Search</button>
-        <a href="view_dealers.jsp" class="btn-reset">Reset</a>
-    </form>
+    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:14px; flex-wrap:wrap; gap:10px;" class="no-print">
+        <form class="search-bar" action="view_dealers.jsp" method="get" style="margin-bottom:0; flex:1;">
+            <input type="text" name="keyword" placeholder="🔍 Search by Name, Phone or ID"
+                   value="<%= hasKeyword ? keyword : "" %>">
+            <button type="submit" class="btn-search">Search</button>
+            <a href="view_dealers.jsp" class="btn-reset">Reset</a>
+        </form>
+        <button class="btn-print" onclick="printStatement()">🖨️ Print Statement</button>
+    </div>
 
-    <div class="table-container">
+    <div class="table-container no-print">
         <table>
             <thead>
                 <tr>
@@ -164,9 +180,25 @@
             </tbody>
         </table>
     </div>
+
 </div>
 
 <script>
+var dealerData = [
+<%
+    try (Connection conn = DBConnection.getConnection();
+         java.sql.Statement st = conn.createStatement();
+         ResultSet rs = st.executeQuery("SELECT id, name, phone, credit FROM dealers ORDER BY id ASC")) {
+        boolean first = true;
+        while (rs.next()) {
+            if (!first) out.print(",");
+            first = false;
+            out.print("{id:" + rs.getInt("id") + ",name:\"" + rs.getString("name").replace("\"","\\\"") + "\",phone:\"" + rs.getString("phone") + "\",credit:" + rs.getDouble("credit") + "}");
+        }
+    } catch (Exception e) {}
+%>
+];
+
 function toggleCredit(id, amount) {
     var span      = document.getElementById('dcredit-'     + id);
     var eyeOpen   = document.getElementById('deye-open-'   + id);
@@ -180,6 +212,62 @@ function toggleCredit(id, amount) {
         eyeOpen.style.display   = 'block';
         eyeClosed.style.display = 'none';
     }
+}
+
+function printStatement() {
+    var now = new Date();
+    var dateStr = now.toLocaleDateString('en-IN', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
+    var timeStr = now.toLocaleTimeString('en-IN', { hour:'2-digit', minute:'2-digit' });
+
+    var rows = '';
+    var total = 0;
+    var sNo = 1;
+    dealerData.forEach(function(d) {
+        total += d.credit;
+        var bg = sNo % 2 === 0 ? 'background:#fff8f0;' : '';
+        rows += '<tr style="' + bg + '">' +
+            '<td style="padding:9px 12px;border-bottom:1px solid #e2e8f0;">' + sNo++ + '</td>' +
+            '<td style="padding:9px 12px;border-bottom:1px solid #e2e8f0;">#' + d.id + '</td>' +
+            '<td style="padding:9px 12px;border-bottom:1px solid #e2e8f0;">' + d.name + '</td>' +
+            '<td style="padding:9px 12px;border-bottom:1px solid #e2e8f0;">' + d.phone + '</td>' +
+            '<td style="padding:9px 12px;border-bottom:1px solid #e2e8f0;text-align:right;font-weight:700;">&#8377; ' + d.credit.toFixed(2) + '</td>' +
+            '</tr>';
+    });
+
+    var html = '<!DOCTYPE html><html><head><meta charset="UTF-8">' +
+        '<title>Dealer Credit Statement - Mauali Tredars</title>' +
+        '<style>' +
+        'body{font-family:Arial,sans-serif;margin:30px;color:#0d1b2a;}' +
+        '.header{text-align:center;border-bottom:3px double #7a3800;padding-bottom:14px;margin-bottom:20px;}' +
+        '.shop-name{font-size:26px;font-weight:800;letter-spacing:2px;text-transform:uppercase;}' +
+        '.report-title{font-size:14px;font-weight:600;color:#4a5568;margin-top:4px;}' +
+        '.report-meta{font-size:12px;color:#94a3b8;margin-top:5px;}' +
+        'table{width:100%;border-collapse:collapse;font-size:13px;}' +
+        'th{background:#7a3800;color:#fff;padding:10px 12px;text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:0.6px;}' +
+        'tfoot td{background:#fff3e0;font-weight:700;border-top:2px solid #7a3800;padding:11px 12px;}' +
+        '.footer{margin-top:20px;text-align:center;font-size:11px;color:#94a3b8;border-top:1px solid #e2e8f0;padding-top:10px;}' +
+        '@media print{body{margin:15px;}}' +
+        '</style></head><body>' +
+        '<div class="header">' +
+        '<div class="shop-name">Mauali Tredars</div>' +
+        '<div class="report-title">Dealer Credit Statement</div>' +
+        '<div class="report-meta">Generated on: ' + dateStr + ' at ' + timeStr + '</div>' +
+        '</div>' +
+        '<table><thead><tr>' +
+        '<th>#</th><th>Dealer ID</th><th>Dealer Name</th><th>Phone No.</th><th style="text-align:right;">Credit Amount (Rs.)</th>' +
+        '</tr></thead><tbody>' + rows + '</tbody>' +
+        '<tfoot><tr>' +
+        '<td colspan="4" style="text-align:right;font-size:13px;">Total Outstanding Credit</td>' +
+        '<td style="text-align:right;font-size:14px;">&#8377; ' + total.toFixed(2) + '</td>' +
+        '</tr></tfoot></table>' +
+        '<div class="footer">Mauali Tredars &middot; Dealer Credit Statement &middot; Printed on ' + dateStr + '</div>' +
+        '</body></html>';
+
+    var pw = window.open('', '_blank', 'width=900,height=650');
+    pw.document.write(html);
+    pw.document.close();
+    pw.focus();
+    pw.print();
 }
 </script>
 </body>
