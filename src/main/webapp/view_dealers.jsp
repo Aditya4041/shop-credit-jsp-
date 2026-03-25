@@ -1,5 +1,5 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
-<%@ page import="java.sql.*, doa.DBConnection" %>
+<%@ page import="java.sql.*, doa.DBConnection, doa.ShopConfig" %>
 <%
     if (session.getAttribute("admin") == null) {
         response.sendRedirect("login.jsp?error=Please login first");
@@ -7,6 +7,9 @@
     }
     String keyword = request.getParameter("keyword");
     boolean hasKeyword = (keyword != null && !keyword.trim().isEmpty());
+
+    ShopConfig shop     = ShopConfig.getInstance();
+    String shopEnNameJs = shop.getEnglishNameJs();
 %>
 <!DOCTYPE html>
 <html lang="en">
@@ -58,7 +61,6 @@
             display: inline-flex; align-items: center; gap: 7px;
         }
         .btn-print:hover { opacity: 0.88; }
-
     </style>
 </head>
 <body>
@@ -184,6 +186,9 @@
 </div>
 
 <script>
+// ── Shop identity (loaded from DB via ShopConfig) ──────────────────────────
+var SHOP_NAME = "<%= shopEnNameJs %>";
+
 var dealerData = [
 <%
     try (Connection conn = DBConnection.getConnection();
@@ -235,7 +240,7 @@ function printStatement() {
     });
 
     var html = '<!DOCTYPE html><html><head><meta charset="UTF-8">' +
-        '<title>Dealer Credit Statement - Mauali Tredars</title>' +
+        '<title>Dealer Credit Statement - ' + SHOP_NAME + '</title>' +
         '<style>' +
         'body{font-family:Arial,sans-serif;margin:30px;color:#0d1b2a;}' +
         '.header{text-align:center;border-bottom:3px double #7a3800;padding-bottom:14px;margin-bottom:20px;}' +
@@ -249,7 +254,7 @@ function printStatement() {
         '@media print{body{margin:15px;}}' +
         '</style></head><body>' +
         '<div class="header">' +
-        '<div class="shop-name">Mauali Tredars</div>' +
+        '<div class="shop-name">' + SHOP_NAME + '</div>' +
         '<div class="report-title">Dealer Credit Statement</div>' +
         '<div class="report-meta">Generated on: ' + dateStr + ' at ' + timeStr + '</div>' +
         '</div>' +
@@ -260,7 +265,7 @@ function printStatement() {
         '<td colspan="4" style="text-align:right;font-size:13px;">Total Outstanding Credit</td>' +
         '<td style="text-align:right;font-size:14px;">&#8377; ' + total.toFixed(2) + '</td>' +
         '</tr></tfoot></table>' +
-        '<div class="footer">Mauali Tredars &middot; Dealer Credit Statement &middot; Printed on ' + dateStr + '</div>' +
+        '<div class="footer">' + SHOP_NAME + ' &middot; Dealer Credit Statement &middot; Printed on ' + dateStr + '</div>' +
         '</body></html>';
 
     var pw = window.open('', '_blank', 'width=900,height=650');

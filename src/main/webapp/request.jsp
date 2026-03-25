@@ -1,10 +1,15 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
-<%@ page import="java.sql.*, doa.DBConnection" %>
+<%@ page import="java.sql.*, doa.DBConnection, doa.ShopConfig" %>
 <%
     if (session.getAttribute("admin") == null) {
         response.sendRedirect("login.jsp?error=Please login first");
         return;
     }
+
+    // ── Shop identity ──────────────────────────────────────────────────────
+    ShopConfig shop      = ShopConfig.getInstance();
+    String shopEnNameJs  = shop.getEnglishNameJs();
+    String shopMrNameJs  = shop.getMarathiNameJs();
 
     // Fetch products for dropdown
     StringBuilder productsJson = new StringBuilder("[");
@@ -246,11 +251,7 @@
         .tph-product { background: linear-gradient(90deg, #182542, #2a5a8f); }
         .tph-cash    { background: linear-gradient(90deg, #7a3800, #d4681a); }
 
-        .req-table {
-            width: 100%;
-            border-collapse: collapse;
-            font-size: 13px;
-        }
+        .req-table { width: 100%; border-collapse: collapse; font-size: 13px; }
         .req-table thead th {
             padding: 10px 12px;
             text-align: center;
@@ -338,17 +339,13 @@
             padding: 9px 12px;
             border: 2px solid #c8b7f6;
             border-radius: 8px;
-            font-size: 13px;
-            color: #1a1a2a;
-            background: #fff;
-            outline: none;
+            font-size: 13px; color: #1a1a2a; background: #fff; outline: none;
         }
 
         /* ── Message Modal ── */
         .msg-modal-backdrop {
             display: none;
-            position: fixed;
-            inset: 0;
+            position: fixed; inset: 0;
             background: rgba(0,0,0,0.65);
             backdrop-filter: blur(4px);
             z-index: 999;
@@ -360,8 +357,7 @@
         .msg-modal {
             background: #fff;
             border-radius: 20px;
-            width: 90%;
-            max-width: 540px;
+            width: 90%; max-width: 540px;
             box-shadow: 0 32px 80px rgba(0,0,0,0.35);
             overflow: hidden;
             animation: slideUp 0.25s cubic-bezier(0.22,1,0.36,1);
@@ -373,11 +369,8 @@
 
         .msg-modal-header {
             background: linear-gradient(135deg, #2b0d73, #4a2fa0);
-            color: #fff;
-            padding: 16px 22px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
+            color: #fff; padding: 16px 22px;
+            display: flex; align-items: center; justify-content: space-between;
         }
         .msg-modal-header h3 { font-size: 15px; font-weight: 700; margin: 0; }
         .btn-close-modal {
@@ -389,9 +382,7 @@
         }
         .btn-close-modal:hover { background: rgba(255,255,255,0.28); }
 
-        .msg-body {
-            padding: 22px;
-        }
+        .msg-body { padding: 22px; }
 
         .msg-preview {
             background: #f8fafc;
@@ -399,30 +390,19 @@
             border-radius: 12px;
             padding: 18px 20px;
             font-family: 'Segoe UI', Arial, sans-serif;
-            font-size: 14px;
-            line-height: 1.7;
+            font-size: 14px; line-height: 1.7;
             color: #0d1b2a;
-            white-space: pre-wrap;
-            word-break: break-word;
-            min-height: 120px;
-            max-height: 320px;
-            overflow-y: auto;
-            margin-bottom: 16px;
+            white-space: pre-wrap; word-break: break-word;
+            min-height: 120px; max-height: 320px;
+            overflow-y: auto; margin-bottom: 16px;
         }
 
-        .msg-actions {
-            display: flex;
-            gap: 10px;
-        }
+        .msg-actions { display: flex; gap: 10px; }
         .btn-copy {
-            flex: 1;
-            padding: 11px;
-            background: #f5f3ff;
-            color: #2b0d73;
-            border: 2px solid #c8b7f6;
-            border-radius: 9px;
-            font-size: 13px; font-weight: 700;
-            cursor: pointer;
+            flex: 1; padding: 11px;
+            background: #f5f3ff; color: #2b0d73;
+            border: 2px solid #c8b7f6; border-radius: 9px;
+            font-size: 13px; font-weight: 700; cursor: pointer;
             display: flex; align-items: center; justify-content: center; gap: 7px;
             transition: all 0.2s;
         }
@@ -430,13 +410,9 @@
         .btn-copy.copied { background: #e8f5e9; color: #1b5e20; border-color: #a5d6a7; }
 
         .btn-share {
-            flex: 1;
-            padding: 11px;
-            background: #25D366;
-            color: #fff;
-            border: none;
-            border-radius: 9px;
-            font-size: 13px; font-weight: 700;
+            flex: 1; padding: 11px;
+            background: #25D366; color: #fff; border: none;
+            border-radius: 9px; font-size: 13px; font-weight: 700;
             cursor: pointer;
             display: flex; align-items: center; justify-content: center; gap: 7px;
             transition: opacity 0.2s;
@@ -450,7 +426,7 @@
     <!-- ── Page Title ── -->
     <div style="margin-bottom: 22px;">
         <h2 style="font-size:20px; font-weight:800; color:#0d1b2a; margin:0 0 4px;">📋 Requests</h2>
-        <p style="font-size:13px; color:#94a3b8; margin:0;">Generate and share product or cash requests with Dealers and Cstomers.</p>
+        <p style="font-size:13px; color:#94a3b8; margin:0;">Generate and share product or cash requests with Dealers and Customers.</p>
     </div>
 
     <!-- ── Type Cards ── -->
@@ -616,9 +592,7 @@
         <div class="msg-body">
             <div class="msg-preview" id="msgPreviewText"></div>
             <div class="msg-actions">
-                <button class="btn-copy" id="btnCopy" onclick="copyMessage()">
-                    📋 Copy Message
-                </button>
+                <button class="btn-copy" id="btnCopy" onclick="copyMessage()">📋 Copy Message</button>
                 <button class="btn-share" onclick="shareMessage()">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
                         <path d="M17.498 14.382c-.301-.01-.6.049-.876.17l-2.456-2.457c.182-.415.276-.863.276-1.312 0-.45-.094-.898-.276-1.313l2.456-2.456c.276.12.575.18.876.17.856.028 1.66-.322 2.28-.946a3.26 3.26 0 0 0 0-4.576c-.62-.624-1.424-.974-2.28-.946-.856-.028-1.66.322-2.28.946-.624.62-.974 1.424-.946 2.28.01.301.07.6.17.876l-2.456 2.456A3.26 3.26 0 0 0 12 7.46a3.26 3.26 0 0 0-1.312.276L8.232 5.28c.1-.276.16-.575.17-.876.028-.856-.322-1.66-.946-2.28a3.26 3.26 0 0 0-4.576 0c-.624.62-.974 1.424-.946 2.28-.028.856.322 1.66.946 2.28.62.624 1.424.974 2.28.946.301-.01.6-.07.876-.17l2.456 2.456a3.26 3.26 0 0 0 0 2.625l-2.456 2.456a3.104 3.104 0 0 0-.876-.17c-.856-.028-1.66.322-2.28.946a3.26 3.26 0 0 0 0 4.576c.62.624 1.424.974 2.28.946.856.028 1.66-.322 2.28-.946.624-.62.974-1.424.946-2.28a3.104 3.104 0 0 0-.17-.876l2.456-2.456A3.26 3.26 0 0 0 12 16.54c.45 0 .898-.094 1.312-.276l2.456 2.456a3.104 3.104 0 0 0-.17.876c-.028.856.322 1.66.946 2.28.62.624 1.424.974 2.28.946.856.028 1.66-.322 2.28-.946a3.26 3.26 0 0 0 0-4.576c-.62-.624-1.424-.974-2.28-.946z"/>
@@ -646,9 +620,7 @@
                         onclick="copyCashMessage()">
                     📋 Copy Message
                 </button>
-                <button class="btn-share"
-                        style="background: #25D366;"
-                        onclick="shareCashMessage()">
+                <button class="btn-share" style="background: #25D366;" onclick="shareCashMessage()">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
                         <path d="M17.498 14.382c-.301-.01-.6.049-.876.17l-2.456-2.457c.182-.415.276-.863.276-1.312 0-.45-.094-.898-.276-1.313l2.456-2.456c.276.12.575.18.876.17.856.028 1.66-.322 2.28-.946a3.26 3.26 0 0 0 0-4.576c-.62-.624-1.424-.974-2.28-.946-.856-.028-1.66.322-2.28.946-.624.62-.974 1.424-.946 2.28.01.301.07.6.17.876l-2.456 2.456A3.26 3.26 0 0 0 12 7.46a3.26 3.26 0 0 0-1.312.276L8.232 5.28c.1-.276.16-.575.17-.876.028-.856-.322-1.66-.946-2.28a3.26 3.26 0 0 0-4.576 0c-.624.62-.974 1.424-.946 2.28-.028.856.322 1.66.946 2.28.62.624 1.424.974 2.28.946.301-.01.6-.07.876-.17l2.456 2.456a3.26 3.26 0 0 0 0 2.625l-2.456 2.456a3.104 3.104 0 0 0-.876-.17c-.856-.028-1.66.322-2.28.946a3.26 3.26 0 0 0 0 4.576c.62.624 1.424.974 2.28.946.856.028 1.66-.322 2.28-.946.624-.62.974-1.424.946-2.28a3.104 3.104 0 0 0-.17-.876l2.456-2.456A3.26 3.26 0 0 0 12 16.54c.45 0 .898-.094 1.312-.276l2.456 2.456a3.104 3.104 0 0 0-.17.876c-.028.856.322 1.66.946 2.28.62.624 1.424.974 2.28.946.856.028 1.66-.322 2.28-.946a3.26 3.26 0 0 0 0-4.576c-.62-.624-1.424-.974-2.28-.946z"/>
                     </svg>
@@ -660,6 +632,10 @@
 </div>
 
 <script>
+// ── Shop identity loaded from DB via ShopConfig ────────────────────────────
+var SHOP_EN = "<%= shopEnNameJs %>";   // e.g. "Mauali Tredars"
+var SHOP_MR = "<%= shopMrNameJs %>";   // e.g. "माऊली ट्रेडर्स"
+
 var PRODUCTS  = <%= productsJson.toString() %>;
 var DEALERS   = <%= dealersJson.toString() %>;
 var CUSTOMERS = <%= customersJson.toString() %>;
@@ -718,7 +694,6 @@ function showSection(type) {
     document.getElementById('section-cash').classList.remove('visible');
     document.getElementById('card-product').classList.remove('active');
     document.getElementById('card-cash').classList.remove('active');
-
     document.getElementById('section-' + type).classList.add('visible');
     document.getElementById('card-' + type).classList.add('active');
 }
@@ -814,7 +789,7 @@ function generateProductMessage() {
     var lines = [];
     lines.push('|| श्री ||');
     lines.push('');
-    lines.push('माऊली ट्रेडर्स');
+    lines.push(SHOP_MR);                         // ← from DB
     lines.push('');
     lines.push('डीलर: ' + dlrName);
     lines.push('📦 प्रॉडक्ट रिक्वेस्ट:');
@@ -880,19 +855,16 @@ function generateCashMessage() {
     var lines = [];
     lines.push('|| श्री ||');
     lines.push('');
-    lines.push('🙏 *माऊली ट्रेडर्स*');
+    lines.push('🙏 *' + SHOP_MR + '*');           // ← from DB
     lines.push('');
     lines.push('नमस्कार ' + c.name);
     lines.push('');
     lines.push('आपल्या खात्यावर सध्या खालील थकबाकी आहे:');
-
     lines.push('💰 *थकबाकी रक्कम: ₹ ' + credit + '*');
-
     lines.push('कृपया लवकरात लवकर संपर्क करून ही रक्कम जमा करावी.');
-
     lines.push('आपल्या सहकार्याबद्दल आभारी आहोत. 🙏');
     lines.push('');
-    lines.push('— माऊली ट्रेडर्स');
+    lines.push('— ' + SHOP_MR);                   // ← from DB
 
     cashMsg = lines.join('\n');
 
@@ -902,35 +874,15 @@ function generateCashMessage() {
     document.getElementById('cashModalBackdrop').classList.add('show');
 }
 
-// ── Product Modal ───────────────────────────────────────────────────────────
-function closeModal(e) {
-    if (e.target === document.getElementById('msgModalBackdrop'))
-        document.getElementById('msgModalBackdrop').classList.remove('show');
-}
-function closeModalDirect() {
-    document.getElementById('msgModalBackdrop').classList.remove('show');
-}
+// ── Modal open/close ────────────────────────────────────────────────────────
+function closeModal(e)          { if (e.target === document.getElementById('msgModalBackdrop'))  document.getElementById('msgModalBackdrop').classList.remove('show'); }
+function closeModalDirect()     { document.getElementById('msgModalBackdrop').classList.remove('show'); }
+function closeCashModal(e)      { if (e.target === document.getElementById('cashModalBackdrop')) document.getElementById('cashModalBackdrop').classList.remove('show'); }
+function closeCashModalDirect() { document.getElementById('cashModalBackdrop').classList.remove('show'); }
 
-// ── Cash Modal ──────────────────────────────────────────────────────────────
-function closeCashModal(e) {
-    if (e.target === document.getElementById('cashModalBackdrop'))
-        document.getElementById('cashModalBackdrop').classList.remove('show');
-}
-function closeCashModalDirect() {
-    document.getElementById('cashModalBackdrop').classList.remove('show');
-}
-
-// ── Copy (product) ──────────────────────────────────────────────────────────
-function copyMessage() {
-    if (!generatedMsg) return;
-    doCopy(generatedMsg, 'btnCopy');
-}
-
-// ── Copy (cash) ─────────────────────────────────────────────────────────────
-function copyCashMessage() {
-    if (!cashMsg) return;
-    doCopy(cashMsg, 'btnCashCopy');
-}
+// ── Copy ────────────────────────────────────────────────────────────────────
+function copyMessage()     { if (generatedMsg) doCopy(generatedMsg, 'btnCopy'); }
+function copyCashMessage() { if (cashMsg)      doCopy(cashMsg,      'btnCashCopy'); }
 
 function doCopy(text, btnId) {
     if (navigator.clipboard && navigator.clipboard.writeText) {
@@ -940,16 +892,13 @@ function doCopy(text, btnId) {
 }
 function fallbackCopy(text, btnId) {
     var ta = document.createElement('textarea');
-    ta.value = text;
-    ta.style.position = 'fixed'; ta.style.opacity = '0';
-    document.body.appendChild(ta);
-    ta.select();
+    ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
+    document.body.appendChild(ta); ta.select();
     try { document.execCommand('copy'); markCopied(btnId); } catch(e) {}
     document.body.removeChild(ta);
 }
 function markCopied(btnId) {
     var btn = document.getElementById(btnId);
-    var orig = btn.textContent;
     btn.textContent = '✅ Copied!';
     btn.classList.add('copied');
     setTimeout(function() {
@@ -958,17 +907,9 @@ function markCopied(btnId) {
     }, 2500);
 }
 
-// ── Share (product) ─────────────────────────────────────────────────────────
-function shareMessage() {
-    if (!generatedMsg) return;
-    window.open('https://wa.me/?text=' + encodeURIComponent(generatedMsg), '_blank');
-}
-
-// ── Share (cash) ────────────────────────────────────────────────────────────
-function shareCashMessage() {
-    if (!cashMsg) return;
-    window.open('https://wa.me/?text=' + encodeURIComponent(cashMsg), '_blank');
-}
+// ── Share ───────────────────────────────────────────────────────────────────
+function shareMessage()     { if (generatedMsg) window.open('https://wa.me/?text=' + encodeURIComponent(generatedMsg), '_blank'); }
+function shareCashMessage() { if (cashMsg)      window.open('https://wa.me/?text=' + encodeURIComponent(cashMsg),      '_blank'); }
 </script>
 </body>
 </html>

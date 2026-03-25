@@ -1,4 +1,5 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
+<%@ page import="doa.ShopConfig" %>
 <%
     if (session.getAttribute("admin") != null) {
         response.sendRedirect("main.jsp");
@@ -6,13 +7,16 @@
     }
     String errorMsg  = request.getParameter("error");
     String logoutMsg = request.getParameter("logout");
+
+    ShopConfig shop   = ShopConfig.getInstance();
+    String shopEnName = shop.getEnglishName();
 %>
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login — Mauali Tredars</title>
+    <title>Login — <%= shopEnName %></title>
     <link rel="stylesheet" href="css/login.css">
 </head>
 <body>
@@ -21,7 +25,7 @@
     <!-- Brand -->
     <div class="brand-section">
         <span class="brand-icon">🏪</span>
-        <div class="brand-title">Mauali Tredars</div>
+        <div class="brand-title"><%= shopEnName %></div>
         <div class="brand-sub">Shop Credit Management System</div>
     </div>
 
@@ -70,11 +74,11 @@
                 </div>
             </div>
 
-            <button type="submit" class="btn-login">Sign In →</button>
+            <button type="submit" class="btn-login">Sign In</button>
         </form>
     </div>
 
-    <div class="login-footer">© 2025 Mauali Tredars · All rights reserved.</div>
+    <div class="login-footer">© 2025 <%= shopEnName %> · All rights reserved.</div>
 </div>
 
 <script>

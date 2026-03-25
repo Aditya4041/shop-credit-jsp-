@@ -1,19 +1,23 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
+<%@ page import="doa.ShopConfig" %>
 <%
     if (session.getAttribute("admin") == null) {
         response.sendRedirect("login.jsp?error=Please login first");
         return;
     }
-    String adminUser = (String) session.getAttribute("admin");
-    String fullName  = (String) session.getAttribute("fullName");
+    String adminUser  = (String) session.getAttribute("admin");
+    String fullName   = (String) session.getAttribute("fullName");
     if (fullName == null) fullName = adminUser;
+
+    ShopConfig shop   = ShopConfig.getInstance();
+    String shopEnName = shop.getEnglishName();
 %>
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mauali Tredars — Credit Manager</title>
+    <title><%= shopEnName %> — Credit Manager</title>
     <link rel="stylesheet" href="css/main.css">
 </head>
 <body>
@@ -76,14 +80,14 @@
             </a>
             <span class="tooltip-label">Products</span>
         </li>
-        
+
         <li data-page="request.jsp">
-		    <a href="#" onclick="loadPage('request.jsp','Requests',this);return false;">
-		        <span class="menu-icon">📋</span>
-		        <span class="menu-label">Requests</span>
-		    </a>
-		    <span class="tooltip-label">Requests</span>
-		</li>
+            <a href="#" onclick="loadPage('request.jsp','Requests',this);return false;">
+                <span class="menu-icon">📋</span>
+                <span class="menu-label">Requests</span>
+            </a>
+            <span class="tooltip-label">Requests</span>
+        </li>
 
     </ul>
 
@@ -105,7 +109,7 @@
             </button>
             <div class="bank-section">
                 <span class="bank-icon">🏪</span>
-                <h1 class="bank-title">Mauali Tredars</h1>
+                <h1 class="bank-title"><%= shopEnName %></h1>
             </div>
         </div>
         <div class="nav-row">
@@ -196,7 +200,7 @@ window.onload = function() {
 function showLogoutModal(e) { e.preventDefault(); document.getElementById('logoutModal').classList.add('show'); }
 function closeLogoutModal() { document.getElementById('logoutModal').classList.remove('show'); }
 function confirmLogout()    { sessionStorage.clear(); window.location.href = 'LogoutServlet'; }
-window.onclick = function(e) { if (e.target === document.getElementById('logoutModal')) closeLogoutModal(); };
+window.onclick = function(e) { if (e.target === document.getElementById('logoutModal')) closeLogoutModal(); }
 document.addEventListener('keydown', function(e) { if (e.key === 'Escape') closeLogoutModal(); });
 </script>
 </body>

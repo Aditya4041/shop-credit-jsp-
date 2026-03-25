@@ -1,5 +1,5 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
-<%@ page import="java.sql.*, doa.DBConnection" %>
+<%@ page import="java.sql.*, doa.DBConnection, doa.ShopConfig" %>
 <%
     if (session.getAttribute("admin") == null) {
         response.sendRedirect("login.jsp?error=Please login first");
@@ -41,6 +41,10 @@
             totalSettled = rsTxn.getDouble(3);
         }
     } catch (Exception e) { /* ignore */ }
+
+    ShopConfig shop      = ShopConfig.getInstance();
+    String shopEnName    = shop.getEnglishName();
+    String shopEnNameJs  = shop.getEnglishNameJs();
 %>
 <!DOCTYPE html>
 <html lang="en">
@@ -115,7 +119,6 @@
             transition: all 0.2s; white-space: nowrap;
         }
         .btn-print-all:hover { background: #0d1b2a; color: #fff; }
-
     </style>
 </head>
 <body>
@@ -227,6 +230,9 @@
 </div>
 
 <script>
+// ── Shop identity (loaded from DB via ShopConfig) ──────────────────────────
+var SHOP_NAME = "<%= shopEnNameJs %>";
+
 // Load all transactions as JS array
 var allTxns = [
 <%
@@ -308,7 +314,7 @@ function buildPopupHtml(txns, periodLabel, dateStr) {
         '@media print{body{margin:12px;}}' +
         '</style></head><body>' +
         '<div class="header">' +
-        '<div class="shop-name">Mauali Tredars</div>' +
+        '<div class="shop-name">' + SHOP_NAME + '</div>' +
         '<div class="report-title">Customer Transaction Statement</div>' +
         '<div class="report-meta">' + periodLabel + '</div>' +
         '</div>' +
@@ -331,7 +337,7 @@ function buildPopupHtml(txns, periodLabel, dateStr) {
         '<td colspan="6" style="text-align:right;">Net for Period</td>' +
         '<td style="text-align:right;">&#8377; ' + net.toFixed(2) + '</td>' +
         '</tr></tfoot></table>' +
-        '<div class="footer">Mauali Tredars &middot; Customer Transaction Statement &middot; Printed on ' + dateStr + '</div>' +
+        '<div class="footer">' + SHOP_NAME + ' &middot; Customer Transaction Statement &middot; Printed on ' + dateStr + '</div>' +
         '</body></html>';
 }
 
