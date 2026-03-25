@@ -76,6 +76,14 @@
             </a>
             <span class="tooltip-label">Products</span>
         </li>
+        
+        <li data-page="request.jsp">
+		    <a href="#" onclick="loadPage('request.jsp','Requests',this);return false;">
+		        <span class="menu-icon">📋</span>
+		        <span class="menu-label">Requests</span>
+		    </a>
+		    <span class="tooltip-label">Requests</span>
+		</li>
 
     </ul>
 
